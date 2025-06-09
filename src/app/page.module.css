@@ -464,26 +464,172 @@
   }
 }
 
-/* 반응형 */
+/* 모바일 반응형 디자인 */
 @media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .headerControls {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .lastRefreshedText {
+    font-size: 0.8rem;
+    order: 3;
+    width: 100%;
+    text-align: center;
+  }
+
+  .button,
+  .themeToggle,
+  .sortToggle {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+
   .filterSection {
     flex-direction: column;
     align-items: stretch;
+    gap: 0.75rem;
+    padding: 0.75rem;
   }
 
   .filterGroup {
     justify-content: space-between;
+    align-items: center;
+  }
+
+  .filterLabel {
+    min-width: 60px;
+    font-size: 0.85rem;
+  }
+
+  .filterSelect {
+    flex: 1;
+    min-height: 44px;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .searchInput {
+    min-width: auto;
+    width: 100%;
+    min-height: 44px;
+    padding: 0.5rem 0.75rem;
   }
 
   .resultCount {
     margin-left: 0;
     text-align: center;
     margin-top: 0.5rem;
+    font-size: 0.85rem;
   }
 
-  .searchInput {
-    min-width: auto;
-    width: 100%;
+  .commentsContainer {
+    padding: 0;
+  }
+
+  .commentCard {
+    margin-bottom: 0.75rem;
+    border-radius: 6px;
+  }
+
+  .commentMeta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .commentAuthor {
+    font-size: 0.9rem;
+  }
+
+  .commentDate,
+  .commentLikes {
+    font-size: 0.8rem;
+  }
+
+  .commentText {
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+
+  .commentLastSeen {
+    font-size: 0.75rem;
+  }
+
+  .repliesContainer {
+    padding-left: 0.75rem;
+    margin-top: 0.5rem;
+    border-left-width: 2px;
+  }
+
+  /* 터치 스크롤 개선 */
+  .commentsContainer {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* 모바일에서 줄바꿈 및 공백 처리 개선 */
+  .commentText {
+    word-break: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+}
+
+/* 더 작은 모바일 화면 (320px~480px) */
+@media (max-width: 480px) {
+  .container {
+    padding: 0.75rem;
+  }
+
+  .title {
+    font-size: 1.25rem;
+  }
+
+  .headerControls {
+    gap: 0.25rem;
+  }
+
+  .button,
+  .themeToggle,
+  .sortToggle {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .filterSection {
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .commentCard {
+    padding: 0.75rem;
+  }
+
+  .activeComment,
+  .deletedComment {
+    padding: 0.75rem;
+  }
+
+  .commentText {
+    font-size: 0.85rem;
   }
 }
 

@@ -13,8 +13,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "YouTube 댓글 대시보드",
-  description: "YouTube 댓글을 실시간으로 모니터링하고 관리하는 대시보드",
+  title: "악플찾기",
+  description: "악플을 실시간으로 모니터링하고 관리하는 대시보드",
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+  },
 };
 
 export default function RootLayout({

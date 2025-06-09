@@ -233,7 +233,7 @@ export default function DashboardPage() {
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h1 className={styles.title}>YouTube 댓글 대시보드</h1>
+        <h1 className={styles.title}>윤서 악플 대시보드</h1>
         <div className={styles.headerControls}>
           <span className={styles.lastRefreshedText}>
             마지막 새로고침: {lastRefreshed ? formatDate(lastRefreshed.toISOString()) : 'N/A'}
