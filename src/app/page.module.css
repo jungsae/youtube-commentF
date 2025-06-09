@@ -42,13 +42,18 @@
 }
 
 .button {
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
+  padding: 0.5rem;
+  font-size: 1.2rem;
   cursor: pointer;
   border: 1px solid #e1e1e1;
-  border-radius: 5px;
+  border-radius: 50%;
   background-color: #fff;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
+  min-width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .button:hover:not(:disabled) {
@@ -58,6 +63,20 @@
 .button:disabled {
   cursor: not-allowed;
   opacity: 0.6;
+}
+
+.button:disabled {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .errorText {
@@ -269,13 +288,13 @@
 }
 
 [data-theme="dark"] .button {
-  background-color: #2a2a2a;
-  border-color: #444;
+  background-color: #374151;
+  border-color: #4b5563;
   color: #e1e1e1;
 }
 
 [data-theme="dark"] .button:hover:not(:disabled) {
-  background-color: #333;
+  background-color: #4b5563;
 }
 
 [data-theme="dark"] .themeToggle {
@@ -653,6 +672,15 @@
   .commentText {
     font-size: 0.85rem;
   }
+
+  /* 모바일에서 맨 위로 가기 버튼 위치 조정 */
+  .scrollToTopButton {
+    bottom: 1rem;
+    right: 1rem;
+    width: 45px;
+    height: 45px;
+    font-size: 1.1rem;
+  }
 }
 
 /* 댓글 카드 기반 UI */
@@ -781,6 +809,55 @@
   border-left: 3px solid #e8f4fd;
 }
 
+/* 더 보기 버튼 */
+.loadMoreContainer {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0;
+}
+
+.loadMoreButton {
+  padding: 0.75rem 2rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 2px solid #3b82f6;
+  border-radius: 25px;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+.loadMoreButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+}
+
+/* 맨 위로 가기 버튼 */
+.scrollToTopButton {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  z-index: 1000;
+}
+
+.scrollToTopButton:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+}
+
 /* 다크모드 카드 스타일 */
 [data-theme="dark"] .commentCard {
   background-color: #1f2937;
@@ -842,4 +919,25 @@
   color: #93c5fd;
   border-color: #1d4ed8;
   box-shadow: 0 1px 2px rgba(29, 78, 216, 0.3);
+}
+
+/* 다크모드 버튼들 */
+[data-theme="dark"] .loadMoreButton {
+  border-color: #60a5fa;
+  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+  color: #e0e7ff;
+}
+
+[data-theme="dark"] .loadMoreButton:hover {
+  background: linear-gradient(135deg, #1e3a8a 0%, #1d366e 100%);
+  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.4);
+}
+
+[data-theme="dark"] .scrollToTopButton {
+  background: linear-gradient(135deg, #4c1d95 0%, #3b0764 100%);
+  box-shadow: 0 4px 12px rgba(76, 29, 149, 0.4);
+}
+
+[data-theme="dark"] .scrollToTopButton:hover {
+  box-shadow: 0 6px 20px rgba(76, 29, 149, 0.5);
 }
