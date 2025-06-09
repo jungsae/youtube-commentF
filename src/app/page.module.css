@@ -1,0 +1,645 @@
+/* YouTube 댓글 대시보드 스타일 */
+.container {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #333;
+  padding: 2rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #eaeaea;
+  padding-bottom: 1rem;
+}
+
+.title {
+  margin: 0;
+}
+
+.headerControls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.lastRefreshedText {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.button {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: 1px solid #e1e1e1;
+  border-radius: 5px;
+  background-color: #fff;
+  transition: background-color 0.2s;
+}
+
+.button:hover:not(:disabled) {
+  background-color: #f5f5f5;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.errorText {
+  color: red;
+  margin-bottom: 1rem;
+}
+
+.tableContainer {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.th {
+  background-color: #fcfcfc;
+  padding: 12px 15px;
+  border: 1px solid #e8e8e8;
+  text-align: left;
+  font-weight: 600;
+}
+
+.td {
+  padding: 12px 15px;
+  border: 1px solid #e8e8e8;
+}
+
+.tr {
+  transition: background-color 0.2s;
+}
+
+.tr:hover {
+  background-color: #f5f5f5;
+}
+
+.deletedRow {
+  background-color: #ffebee;
+  color: #757575;
+  text-decoration: line-through;
+}
+
+.deletedRow:hover {
+  background-color: #ffcdd2;
+}
+
+.noData {
+  text-align: center;
+  padding: 2rem;
+  color: #888;
+}
+
+.status {
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.statusActive {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.statusDeleted {
+  background-color: #ffcdd2;
+  color: #c62828;
+  text-decoration: none;
+}
+
+.statusComment {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.statusReply {
+  background-color: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.commentText {
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 0;
+  font-family: inherit;
+}
+
+/* 필터링 및 검색 영역 */
+.filterSection {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.filterGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filterLabel {
+  font-weight: 500;
+  color: #495057;
+  font-size: 0.9rem;
+}
+
+.filterSelect {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.9rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+.filterSelect:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
+}
+
+.searchInput {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.9rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  background-color: #fff;
+  min-width: 250px;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
+}
+
+.resultCount {
+  font-size: 0.9rem;
+  color: #6c757d;
+  font-weight: 500;
+  margin-left: auto;
+}
+
+/* 다크모드 토글 버튼 */
+.themeToggle {
+  padding: 0.5rem;
+  font-size: 1.2rem;
+  cursor: pointer;
+  border: 1px solid #e1e1e1;
+  border-radius: 50%;
+  background-color: #fff;
+  transition: all 0.2s ease;
+  min-width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.themeToggle:hover {
+  background-color: #f5f5f5;
+  transform: scale(1.05);
+}
+
+/* 정렬 토글 버튼 */
+.sortToggle {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: 1px solid #e1e1e1;
+  border-radius: 6px;
+  background-color: #fff;
+  color: #333;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.sortToggle:hover {
+  background-color: #f5f5f5;
+  border-color: #d1d1d1;
+}
+
+/* 다크 모드 지원 (data-theme 기반) */
+[data-theme="dark"] .container {
+  background-color: #1a1a1a;
+  color: #e1e1e1;
+}
+
+[data-theme="dark"] .header {
+  border-bottom-color: #333;
+}
+
+[data-theme="dark"] .title {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .lastRefreshedText {
+  color: #b3b3b3;
+}
+
+[data-theme="dark"] .button {
+  background-color: #2a2a2a;
+  border-color: #444;
+  color: #e1e1e1;
+}
+
+[data-theme="dark"] .button:hover:not(:disabled) {
+  background-color: #333;
+}
+
+[data-theme="dark"] .themeToggle {
+  background-color: #2a2a2a;
+  border-color: #444;
+}
+
+[data-theme="dark"] .themeToggle:hover {
+  background-color: #333;
+}
+
+[data-theme="dark"] .sortToggle {
+  background-color: #2a2a2a;
+  border-color: #444;
+  color: #e1e1e1;
+}
+
+[data-theme="dark"] .sortToggle:hover {
+  background-color: #333;
+  border-color: #555;
+}
+
+[data-theme="dark"] .filterSection {
+  background-color: #2a2a2a;
+  border-color: #444;
+}
+
+[data-theme="dark"] .filterLabel {
+  color: #b3b3b3;
+}
+
+[data-theme="dark"] .filterSelect,
+[data-theme="dark"] .searchInput {
+  background-color: #1a1a1a;
+  border-color: #555;
+  color: #e1e1e1;
+}
+
+[data-theme="dark"] .filterSelect:focus,
+[data-theme="dark"] .searchInput:focus {
+  border-color: #4a9eff;
+  box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.1);
+}
+
+[data-theme="dark"] .resultCount {
+  color: #888;
+}
+
+[data-theme="dark"] .th {
+  background-color: #2a2a2a;
+  border-color: #444;
+  color: #e1e1e1;
+}
+
+[data-theme="dark"] .td {
+  border-color: #444;
+  color: #e1e1e1;
+}
+
+[data-theme="dark"] .tr:hover {
+  background-color: #2a2a2a;
+}
+
+[data-theme="dark"] .deletedRow {
+  background-color: #4a2c2c;
+  color: #b3b3b3;
+}
+
+[data-theme="dark"] .deletedRow:hover {
+  background-color: #5a3535;
+}
+
+[data-theme="dark"] .statusActive {
+  background-color: #1b3a2f;
+  color: #4caf50;
+}
+
+[data-theme="dark"] .statusDeleted {
+  background-color: #4a2c2c;
+  color: #f44336;
+}
+
+[data-theme="dark"] .statusComment {
+  background-color: #1a2c4a;
+  color: #2196f3;
+}
+
+[data-theme="dark"] .statusReply {
+  background-color: #3a1a4a;
+  color: #9c27b0;
+}
+
+[data-theme="dark"] .noData {
+  color: #888;
+}
+
+/* 시스템 설정 따르는 다크모드 (data-theme이 설정되지 않은 경우만) */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme]) .container {
+    background-color: #1a1a1a;
+    color: #e1e1e1;
+  }
+
+  .header {
+    border-bottom-color: #333;
+  }
+
+  .title {
+    color: #ffffff;
+  }
+
+  .lastRefreshedText {
+    color: #b3b3b3;
+  }
+
+  .button {
+    background-color: #2a2a2a;
+    border-color: #444;
+    color: #e1e1e1;
+  }
+
+  .button:hover:not(:disabled) {
+    background-color: #333;
+  }
+
+  .filterSection {
+    background-color: #2a2a2a;
+    border-color: #444;
+  }
+
+  .filterLabel {
+    color: #b3b3b3;
+  }
+
+  .filterSelect,
+  .searchInput {
+    background-color: #1a1a1a;
+    border-color: #555;
+    color: #e1e1e1;
+  }
+
+  .filterSelect:focus,
+  .searchInput:focus {
+    border-color: #4a9eff;
+    box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.1);
+  }
+
+  .resultCount {
+    color: #888;
+  }
+
+  .th {
+    background-color: #2a2a2a;
+    border-color: #444;
+    color: #e1e1e1;
+  }
+
+  .td {
+    border-color: #444;
+    color: #e1e1e1;
+  }
+
+  .tr:hover {
+    background-color: #2a2a2a;
+  }
+
+  .deletedRow {
+    background-color: #4a2c2c;
+    color: #b3b3b3;
+  }
+
+  .deletedRow:hover {
+    background-color: #5a3535;
+  }
+
+  .statusActive {
+    background-color: #1b3a2f;
+    color: #4caf50;
+  }
+
+  .statusDeleted {
+    background-color: #4a2c2c;
+    color: #f44336;
+  }
+
+  .statusComment {
+    background-color: #1a2c4a;
+    color: #2196f3;
+  }
+
+  .statusReply {
+    background-color: #3a1a4a;
+    color: #9c27b0;
+  }
+
+  .noData {
+    color: #888;
+  }
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .filterSection {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filterGroup {
+    justify-content: space-between;
+  }
+
+  .resultCount {
+    margin-left: 0;
+    text-align: center;
+    margin-top: 0.5rem;
+  }
+
+  .searchInput {
+    min-width: auto;
+    width: 100%;
+  }
+}
+
+/* 댓글 카드 기반 UI */
+.commentsContainer {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.commentCard {
+  margin-bottom: 1rem;
+  border: 1px solid #e1e1e1;
+  border-radius: 8px;
+  background-color: #ffffff;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.commentCard:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-color: #d1d1d1;
+}
+
+.activeComment {
+  padding: 1rem;
+}
+
+.deletedComment {
+  padding: 1rem;
+  background-color: #f9f4f4;
+  opacity: 0.7;
+}
+
+.commentHeader {
+  margin-bottom: 0.75rem;
+}
+
+.commentMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.commentAuthor {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.commentDate {
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.commentLikes {
+  color: #666;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.deletedBadge {
+  background-color: #fee;
+  color: #c53030;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.replyBadge {
+  background-color: #e8f4fd;
+  color: #2b6cb0;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.commentContent {
+  margin-bottom: 0.75rem;
+}
+
+.commentText {
+  font-family: inherit;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: #333;
+  line-height: 1.5;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.commentFooter {
+  padding-top: 0.5rem;
+  border-top: 1px solid #f1f1f1;
+}
+
+.commentLastSeen {
+  color: #888;
+  font-size: 0.8rem;
+}
+
+.repliesContainer {
+  margin-top: 0.5rem;
+  padding-left: 1rem;
+  border-left: 3px solid #e8f4fd;
+}
+
+/* 다크모드 카드 스타일 */
+[data-theme="dark"] .commentCard {
+  background-color: #2a2a2a;
+  border-color: #444;
+}
+
+[data-theme="dark"] .commentCard:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border-color: #555;
+}
+
+[data-theme="dark"] .deletedComment {
+  background-color: #3a2a2a;
+}
+
+[data-theme="dark"] .commentAuthor {
+  color: #e1e1e1;
+}
+
+[data-theme="dark"] .commentDate,
+[data-theme="dark"] .commentLikes {
+  color: #b3b3b3;
+}
+
+[data-theme="dark"] .commentText {
+  color: #e1e1e1;
+}
+
+[data-theme="dark"] .commentLastSeen {
+  color: #888;
+}
+
+[data-theme="dark"] .commentFooter {
+  border-top-color: #444;
+}
+
+[data-theme="dark"] .repliesContainer {
+  border-left-color: #4a5568;
+}
+
+[data-theme="dark"] .deletedBadge {
+  background-color: #4a2c2c;
+  color: #f56565;
+}
+
+[data-theme="dark"] .replyBadge {
+  background-color: #2d3748;
+  color: #63b3ed;
+}
