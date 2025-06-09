@@ -33,7 +33,6 @@ export default function DashboardPage() {
 
   // 필터링 관련 상태
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'deleted'>('all');
-  const [filterType, setFilterType] = useState<'all' | 'comment' | 'reply'>('all');
   const [searchText, setSearchText] = useState('');
 
   // 다크모드 상태 관리
@@ -106,6 +105,20 @@ export default function DashboardPage() {
   // 날짜 포맷팅 함수
   const formatDate = (dateString: string) => new Date(dateString).toLocaleString('ko-KR');
 
+  // 검색어 하이라이팅 함수
+  const highlightText = (text: string, searchTerm: string) => {
+    if (!searchTerm) return text;
+
+    const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const parts = text.split(regex);
+
+    return parts.map((part, index) =>
+      regex.test(part) ? (
+        <mark key={index} className={styles.highlight}>{part}</mark>
+      ) : part
+    );
+  };
+
   // 댓글을 트리 구조로 변환하는 함수
   const buildCommentTree = (comments: Comment[], sortOrder: 'newest' | 'oldest') => {
     const commentMap = new Map<string, Comment & { replies: Comment[] }>();
@@ -141,10 +154,13 @@ export default function DashboardPage() {
       }
     };
 
-    // 답글들을 정렬하는 재귀 함수
+    // 답글들을 정렬하는 재귀 함수 (답글은 항상 과거순)
     const sortReplies = (comment: Comment & { replies: Comment[] }) => {
-      comment.replies = sortComments(comment.replies as (Comment & { replies: Comment[] })[]);
-      // 재귀적으로 답글의 답글도 정렬
+      // 답글은 항상 과거순으로 정렬 (published_at 오름차순)
+      comment.replies = comment.replies.sort((a, b) =>
+        new Date(a.published_at).getTime() - new Date(b.published_at).getTime()
+      );
+      // 재귀적으로 답글의 답글도 과거순으로 정렬
       comment.replies.forEach(reply => sortReplies(reply as Comment & { replies: Comment[] }));
     };
 
@@ -162,10 +178,6 @@ export default function DashboardPage() {
     // 상태 필터
     if (filterStatus === 'active' && comment.is_deleted) return false;
     if (filterStatus === 'deleted' && !comment.is_deleted) return false;
-
-    // 유형 필터
-    if (filterType === 'comment' && comment.is_reply) return false;
-    if (filterType === 'reply' && !comment.is_reply) return false;
 
     // 텍스트 검색
     if (searchText && !comment.text.toLowerCase().includes(searchText.toLowerCase()) &&
@@ -185,7 +197,9 @@ export default function DashboardPage() {
       <div className={comment.is_deleted ? styles.deletedComment : styles.activeComment}>
         <div className={styles.commentHeader}>
           <div className={styles.commentMeta}>
-            <span className={styles.commentAuthor}>{comment.author}</span>
+            <span className={styles.commentAuthor}>
+              {highlightText(comment.author, searchText)}
+            </span>
             <span className={styles.commentDate}>{formatDate(comment.published_at)}</span>
             <span className={styles.commentLikes}>👍 {comment.like_count.toLocaleString()}</span>
             {comment.is_deleted && <span className={styles.deletedBadge}>삭제됨</span>}
@@ -193,7 +207,9 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className={styles.commentContent}>
-          <pre className={styles.commentText}>{comment.text}</pre>
+          <div className={styles.commentText}>
+            {highlightText(comment.text, searchText)}
+          </div>
         </div>
         <div className={styles.commentFooter}>
           <span className={styles.commentLastSeen}>최근 확인: {formatDate(comment.last_seen_at)}</span>
@@ -213,7 +229,6 @@ export default function DashboardPage() {
     <div className={styles.container}>
       <header className={styles.header}>
         <div className={styles.headerTop}>
-          <h1 className={styles.title}>운동선수 최윤서 악플 범인찾기</h1>
           <div className={styles.headerControls}>
             <button
               onClick={toggleDarkMode}
@@ -222,14 +237,15 @@ export default function DashboardPage() {
             >
               {isDarkMode ? '☀️' : '🌙'}
             </button>
+            <h1 className={styles.title}>💪장래 운동선수 최윤서 악플찾기💪</h1>
             <button onClick={fetchComments} disabled={loading} className={styles.button}>
               {loading ? '새로고침 중...' : '새로고침'}
             </button>
           </div>
         </div>
-        <span className={styles.lastRefreshedText}>
+        <div className={styles.lastRefreshedText}>
           마지막 새로고침: {lastRefreshed ? formatDate(lastRefreshed.toISOString()) : 'N/A'}
-        </span>
+        </div>
       </header>
 
       {/* 필터링 및 검색 영역 */}
@@ -247,18 +263,7 @@ export default function DashboardPage() {
           </select>
         </div>
 
-        <div className={styles.filterGroup}>
-          <label className={styles.filterLabel}>유형:</label>
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value as 'all' | 'comment' | 'reply')}
-            className={styles.filterSelect}
-          >
-            <option value="all">전체</option>
-            <option value="comment">댓글</option>
-            <option value="reply">답글</option>
-          </select>
-        </div>
+
 
         <div className={styles.filterGroup}>
           <label className={styles.filterLabel}>검색:</label>
