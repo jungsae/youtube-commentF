@@ -6,22 +6,32 @@
 }
 
 .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 1.5rem;
   border-bottom: 1px solid #eaeaea;
   padding-bottom: 1rem;
 }
 
-.title {
-  margin: 0;
+.headerTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .headerControls {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.lastRefreshedText {
+  font-size: 0.9rem;
+  color: #666;
+  text-align: right;
+  margin-top: 0.5rem;
+}
+
+.title {
+  margin: 0;
 }
 
 .lastRefreshedText {
@@ -472,26 +482,34 @@
 
   .header {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .headerTop {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
   }
 
   .title {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
+    margin: 0;
+    flex-shrink: 1;
+    min-width: 0;
   }
 
   .headerControls {
-    width: 100%;
-    justify-content: space-between;
-    flex-wrap: wrap;
+    display: flex;
     gap: 0.5rem;
+    flex-shrink: 0;
   }
 
   .lastRefreshedText {
     font-size: 0.8rem;
-    order: 3;
-    width: 100%;
     text-align: center;
+    color: #666;
   }
 
   .button,
@@ -600,7 +618,7 @@
   }
 
   .title {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
   }
 
   .headerControls {

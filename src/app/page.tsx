@@ -74,19 +74,8 @@ export default function DashboardPage() {
       setLoading(true);
       setError(null);
 
-      console.log('🔄 데이터 가져오기 시작...');
-
-      // 먼저 간단한 쿼리로 테이블 존재 여부 확인
-      console.log('🔍 테이블 확인 중...');
-      const { data: testData, error: testError } = await supabaseClient
-        .from('comments')
-        .select('count', { count: 'exact' });
-
-      console.log('📋 테이블 테스트 결과:', { count: testData, error: testError });
-
       // Supabase 'comments' 테이블에서 데이터를 가져옵니다.
       // is_deleted가 true인 것을 나중에, 그리고 published_at을 기준으로 내림차순 정렬 (최신순)
-      console.log('📊 전체 데이터 조회 시작...');
       const { data, error: fetchError } = await supabaseClient
         .from('comments')
         .select('*')
@@ -94,25 +83,15 @@ export default function DashboardPage() {
         .order('published_at', { ascending: false })
         .limit(100); // 한 번에 보여줄 댓글 수 제한
 
-      console.log('📊 Supabase 응답:', {
-        dataLength: data?.length,
-        data: data,
-        error: fetchError,
-        isArray: Array.isArray(data)
-      });
-
       if (fetchError) {
-        console.error('❌ Supabase 오류:', fetchError);
         throw new Error(`데이터베이스 오류: ${fetchError.message}`);
       }
 
-      console.log(`✅ ${data?.length || 0}개의 댓글을 가져왔습니다.`);
       setComments(data || []);
       setLastRefreshed(new Date());
 
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : '알 수 없는 오류가 발생했습니다.';
-      console.error('❌ 데이터 로딩 실패:', e);
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -233,22 +212,24 @@ export default function DashboardPage() {
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h1 className={styles.title}>윤서 악플 대시보드</h1>
-        <div className={styles.headerControls}>
-          <span className={styles.lastRefreshedText}>
-            마지막 새로고침: {lastRefreshed ? formatDate(lastRefreshed.toISOString()) : 'N/A'}
-          </span>
-          <button
-            onClick={toggleDarkMode}
-            className={styles.themeToggle}
-            title={isDarkMode ? '라이트 모드로 전환' : '다크 모드로 전환'}
-          >
-            {isDarkMode ? '☀️' : '🌙'}
-          </button>
-          <button onClick={fetchComments} disabled={loading} className={styles.button}>
-            {loading ? '새로고침 중...' : '새로고침'}
-          </button>
+        <div className={styles.headerTop}>
+          <h1 className={styles.title}>운동선수 최윤서 악플 범인찾기</h1>
+          <div className={styles.headerControls}>
+            <button
+              onClick={toggleDarkMode}
+              className={styles.themeToggle}
+              title={isDarkMode ? '라이트 모드로 전환' : '다크 모드로 전환'}
+            >
+              {isDarkMode ? '☀️' : '🌙'}
+            </button>
+            <button onClick={fetchComments} disabled={loading} className={styles.button}>
+              {loading ? '새로고침 중...' : '새로고침'}
+            </button>
+          </div>
         </div>
+        <span className={styles.lastRefreshedText}>
+          마지막 새로고침: {lastRefreshed ? formatDate(lastRefreshed.toISOString()) : 'N/A'}
+        </span>
       </header>
 
       {/* 필터링 및 검색 영역 */}
