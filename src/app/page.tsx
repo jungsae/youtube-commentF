@@ -266,7 +266,7 @@ export default function DashboardPage() {
             >
               {isDarkMode ? '☀️' : '🌙'}
             </button>
-            <h1 className={styles.title}>💪운동선수 최윤서 악플찾기💪</h1>
+            <h1 className={styles.title}>?누가 윤서한테 악플씀?</h1>
             <button
               onClick={fetchComments}
               disabled={loading}

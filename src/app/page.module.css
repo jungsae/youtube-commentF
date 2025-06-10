@@ -34,6 +34,9 @@
 
 .title {
   margin: 0;
+  color: #333;
+  font-weight: 700;
+  font-size: 1.5rem;
 }
 
 .lastRefreshedText {
@@ -54,6 +57,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
 }
 
 .button:hover:not(:disabled) {
@@ -241,6 +247,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
 }
 
 .themeToggle:hover {
@@ -262,6 +271,9 @@
   display: flex;
   align-items: center;
   gap: 0.25rem;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
 }
 
 .sortToggle:hover {
@@ -280,7 +292,8 @@
 }
 
 [data-theme="dark"] .title {
-  color: #ffffff;
+  color: #ffffff !important;
+  font-weight: 700;
 }
 
 [data-theme="dark"] .lastRefreshedText {
@@ -403,7 +416,8 @@
   }
 
   .title {
-    color: #ffffff;
+    color: #ffffff !important;
+    font-weight: 700;
   }
 
   .lastRefreshedText {
@@ -518,6 +532,8 @@
     font-size: 1.3rem;
     margin: 0;
     flex-shrink: 1;
+    color: #333 !important;
+    font-weight: 700;
     min-width: 0;
   }
 
@@ -642,6 +658,8 @@
 
   .title {
     font-size: 1.1rem;
+    color: #333 !important;
+    font-weight: 700;
   }
 
   .headerControls {
@@ -827,6 +845,9 @@
   color: white;
   transition: all 0.3s ease;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
 }
 
 .loadMoreButton:hover {
@@ -851,6 +872,9 @@
   transition: all 0.3s ease;
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
   z-index: 1000;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
 }
 
 .scrollToTopButton:hover {
