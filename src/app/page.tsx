@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------
 'use client'; // 이 컴포넌트는 클라이언트 측에서 렌더링되고 동작합니다.
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase as supabaseClient } from '../lib/supabaseClient'; // 위에서 설정한 클라이언트 가져오기
 import styles from './page.module.css'; // CSS 모듈 import
 
@@ -27,9 +27,10 @@ interface Comment {
 export default function DashboardPage() {
   // React의 state hook을 사용하여 상태 관리
   const [comments, setComments] = useState<Comment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   // 필터링 관련 상태
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'deleted'>('all');
@@ -44,6 +45,16 @@ export default function DashboardPage() {
 
   // 정렬 순서 상태 관리
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+
+  // 실시간 알림 관련 상태
+  const [newCommentsCount, setNewCommentsCount] = useState(0);
+  const [toastNotification, setToastNotification] = useState<string | null>(null);
+  const [realtimeStatus, setRealtimeStatus] = useState<string>('연결 중...');
+  const [newCommentIds, setNewCommentIds] = useState<string[]>([]); // 새 댓글 ID 목록
+
+  // 채널 관리를 위한 ref (중복 구독 방지)
+  const channelRef = useRef<ReturnType<typeof supabaseClient.channel> | null>(null);
+  const isSubscribedRef = useRef(false);
 
   // 다크모드 초기화 (localStorage에서 읽기)
   useEffect(() => {
@@ -61,6 +72,47 @@ export default function DashboardPage() {
       localStorage.setItem('theme', 'dark');
     }
   }, []);
+
+  // 서비스 워커 등록 및 알림 권한 요청 (자동 활성화)
+  useEffect(() => {
+    // 서비스 워커 등록
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then((registration) => {
+          console.log('✅ 서비스 워커 등록 성공:', registration);
+        })
+        .catch((error) => {
+          console.log('❌ 서비스 워커 등록 실패:', error);
+        });
+    }
+
+    // 자동으로 알림 권한 요청
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then(permission => {
+        console.log('🔔 브라우저 알림 권한 결과:', permission);
+      });
+    }
+  }, []);
+
+  // 브라우저 알림 표시 함수
+  const showBrowserNotification = (comment: Comment) => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const notification = new Notification('새로운 댓글이 등록되었습니다!', {
+        body: `${comment.author}: ${comment.text.slice(0, 50)}${comment.text.length > 50 ? '...' : ''}`,
+        icon: '/favicon.ico',
+        tag: 'new-comment'
+      });
+
+      // 5초 후 자동으로 닫기
+      setTimeout(() => notification.close(), 5000);
+    }
+  };
+
+  // 토스트 알림 표시 함수
+  const showToastNotification = (message: string) => {
+    setToastNotification(message);
+    setTimeout(() => setToastNotification(null), 3000);
+  };
 
   // 스크롤 감지 (맨 위로 가기 버튼 표시용)
   useEffect(() => {
@@ -126,10 +178,167 @@ export default function DashboardPage() {
     }
   };
 
+  // 클라이언트 마운트 확인
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // useEffect hook을 사용하여 컴포넌트가 처음 렌더링될 때 데이터를 가져옵니다.
   useEffect(() => {
-    fetchComments();
-  }, []); // 빈 배열을 전달하여 최초 1회만 실행
+    if (mounted) {
+      fetchComments();
+    }
+  }, [mounted]); // mounted 상태가 true가 될 때 실행
+
+  // 실시간 구독 설정
+  useEffect(() => {
+    if (!mounted) return; // 마운트되지 않으면 실행하지 않음
+
+    // 이미 구독 중이면 중복 실행 방지
+    if (isSubscribedRef.current) {
+      console.log('🔄 이미 실시간 구독 중입니다. 중복 실행을 방지합니다.');
+      return;
+    }
+
+    console.log('🔄 실시간 구독 설정 시작...');
+
+    // 기존 채널이 있으면 먼저 정리
+    if (channelRef.current) {
+      console.log('🧹 기존 채널 정리 중...');
+      supabaseClient.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
+    // 고유한 채널 이름 생성 (중복 방지)
+    const channelName = `comments-realtime-${Date.now()}-${Math.random()}`;
+    console.log('📡 새 채널 생성:', channelName);
+
+    // 구독 시작 표시
+    isSubscribedRef.current = true;
+
+    // 1. 채널 생성
+    channelRef.current = supabaseClient
+      .channel(channelName)
+      .on(
+        'postgres_changes', // 데이터베이스 변경 사항을 구독
+        {
+          event: 'INSERT', // INSERT 이벤트만 감지 (새로운 댓글만)
+          schema: 'public',
+          table: 'comments',
+        },
+        (payload) => {
+          // 변경 사항이 감지되면 이 함수가 실행됩니다.
+          console.log('🔔 새로운 댓글 감지!', payload);
+
+          const newComment = payload.new as Comment;
+
+          // 새로운 댓글을 상태에 추가
+          setComments(prevComments => {
+            console.log('📝 댓글 상태 업데이트:', newComment);
+            const updatedComments = [newComment, ...prevComments];
+
+            // 알림 카운트 증가 및 새 댓글 ID 추가
+            setNewCommentsCount(prev => {
+              const newCount = prev + 1;
+              console.log('🔢 새 댓글 카운트:', newCount);
+              return newCount;
+            });
+
+            // 새 댓글 ID 목록에 추가
+            setNewCommentIds(prev => [...prev, newComment.comment_id]);
+
+            // 브라우저 알림 표시 (항상 활성화)
+            showBrowserNotification(newComment);
+
+            // 토스트 알림 표시
+            const message = newComment.is_reply
+              ? `새로운 답글: ${newComment.author}님이 답글을 달았습니다.`
+              : `새로운 댓글: ${newComment.author}님이 댓글을 달았습니다.`;
+            showToastNotification(message);
+
+            return updatedComments;
+          });
+        }
+      )
+      .subscribe((status, err) => {
+        // 구독 상태 변경 시 콜백
+        console.log('📡 실시간 구독 상태:', status);
+
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ comments 테이블 실시간 구독 성공!');
+          setRealtimeStatus('연결됨');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ 구독 에러 상세:', {
+            status,
+            error: err,
+            message: err?.message,
+            fullError: JSON.stringify(err, null, 2)
+          });
+          setRealtimeStatus(`채널 오류: ${err?.message || '알 수 없는 오류'}`);
+          // 에러 발생 시 구독 상태 초기화
+          isSubscribedRef.current = false;
+        } else if (status === 'TIMED_OUT') {
+          console.warn('⏰ 실시간 구독 타임아웃');
+          setRealtimeStatus('타임아웃');
+          isSubscribedRef.current = false;
+        } else if (status === 'CLOSED') {
+          console.log('📴 실시간 구독 연결 종료');
+          setRealtimeStatus('연결 종료');
+          isSubscribedRef.current = false;
+        } else {
+          console.log('🔄 구독 상태 변경:', status);
+          setRealtimeStatus(`연결 중... (${status})`);
+        }
+      });
+
+    // 2. 컴포넌트가 언마운트될 때 채널 구독 해제 (메모리 누수 방지)
+    return () => {
+      if (channelRef.current) {
+        console.log('🔌 실시간 구독 해제...');
+        supabaseClient.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+      isSubscribedRef.current = false;
+    };
+  }, [mounted]); // mounted만 의존성으로 사용 (notificationsEnabled 제거)
+
+
+
+  // 새 댓글 확인 함수
+  const showNewComments = () => {
+    if (newCommentIds.length === 0) return;
+
+    // 새 댓글 목록을 콘솔에 출력 (디버깅용)
+    console.log('🔍 새로 추가된 댓글들:', newCommentIds);
+
+    // 토스트로 새 댓글 정보 표시
+    const message = `새로운 댓글 ${newCommentsCount}개를 확인했습니다.`;
+    showToastNotification(message);
+
+    // 첫 번째 새 댓글로 스크롤
+    const firstNewCommentId = newCommentIds[0];
+    const element = document.getElementById(`comment-${firstNewCommentId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // 잠깐 하이라이트 효과
+      element.style.backgroundColor = isDarkMode ? '#4a5568' : '#e2e8f0';
+      setTimeout(() => {
+        element.style.backgroundColor = '';
+      }, 2000);
+    }
+
+    // 카운트와 ID 목록 초기화
+    setNewCommentsCount(0);
+    setNewCommentIds([]);
+  };
+
+  // 새 댓글 카운트 초기화 함수 (제목 클릭용)
+  const resetNewCommentsCount = () => {
+    setNewCommentsCount(0);
+    setNewCommentIds([]);
+  };
+
+
 
   // 날짜 포맷팅 함수
   const formatDate = (dateString: string) => new Date(dateString).toLocaleString('ko-KR');
@@ -221,44 +430,71 @@ export default function DashboardPage() {
   const commentTree = buildCommentTree(filteredComments, sortOrder);
 
   // 댓글 렌더링 함수 (재귀적으로 답글도 렌더링)
-  const renderComment = (comment: Comment & { replies: Comment[] }, depth = 0) => (
-    <div key={comment.comment_id} className={styles.commentCard} style={{ marginLeft: `${depth * 20}px` }}>
-      <div className={comment.is_deleted ? styles.deletedComment : styles.activeComment}>
-        <div className={styles.commentHeader}>
-          <div className={styles.commentMeta}>
-            <span className={styles.commentAuthor}>
-              {highlightText(comment.author, searchText)}
-            </span>
-            <span className={styles.commentDate}>{formatDate(comment.published_at)}</span>
-            <span className={styles.commentLikes}>👍 {comment.like_count.toLocaleString()}</span>
-            {comment.is_deleted && <span className={styles.deletedBadge}>삭제됨</span>}
-            {depth > 0 && <span className={styles.replyBadge}>답글</span>}
-          </div>
-        </div>
-        <div className={styles.commentContent}>
-          <div className={styles.commentText}>
-            {highlightText(comment.text, searchText)}
-          </div>
-        </div>
-        <div className={styles.commentFooter}>
-          <span className={styles.commentLastSeen}>최근 확인: {formatDate(comment.last_seen_at)}</span>
-        </div>
-      </div>
+  const renderComment = (comment: Comment & { replies: Comment[] }, depth = 0) => {
+    const isNewComment = newCommentIds.includes(comment.comment_id);
 
-      {/* 답글들 렌더링 */}
-      {comment.replies.length > 0 && (
-        <div className={styles.repliesContainer}>
-          {comment.replies.map(reply => renderComment(reply as Comment & { replies: Comment[] }, depth + 1))}
+    return (
+      <div
+        key={comment.comment_id}
+        id={`comment-${comment.comment_id}`}
+        className={`${styles.commentCard} ${isNewComment ? styles.newComment : ''}`}
+        style={{ marginLeft: `${depth * 20}px` }}
+      >
+        <div className={comment.is_deleted ? styles.deletedComment : styles.activeComment}>
+          <div className={styles.commentHeader}>
+            <div className={styles.commentMeta}>
+              <span className={styles.commentAuthor}>
+                {highlightText(comment.author, searchText)}
+              </span>
+              <span className={styles.commentDate}>{formatDate(comment.published_at)}</span>
+              <span className={styles.commentLikes}>👍 {comment.like_count.toLocaleString()}</span>
+              {comment.is_deleted && <span className={styles.deletedBadge}>삭제됨</span>}
+              {depth > 0 && <span className={styles.replyBadge}>답글</span>}
+            </div>
+          </div>
+          <div className={styles.commentContent}>
+            <div className={styles.commentText}>
+              {highlightText(comment.text, searchText)}
+            </div>
+          </div>
+          <div className={styles.commentFooter}>
+            <span className={styles.commentLastSeen}>최근 확인: {formatDate(comment.last_seen_at)}</span>
+          </div>
         </div>
-      )}
-    </div>
-  );
+
+        {/* 답글들 렌더링 */}
+        {comment.replies.length > 0 && (
+          <div className={styles.repliesContainer}>
+            {comment.replies.map(reply => renderComment(reply as Comment & { replies: Comment[] }, depth + 1))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className={styles.container}>
       <header className={styles.header}>
         <div className={styles.headerTop}>
+          <h1 className={styles.title} onClick={resetNewCommentsCount}>
+            ?누가 윤서한테 악플씀?
+            {newCommentsCount > 0 && (
+              <span className={styles.titleBadge}>새로운 댓글 {newCommentsCount}개</span>
+            )}
+          </h1>
           <div className={styles.headerControls}>
+            {newCommentsCount > 0 && (
+              <button
+                onClick={showNewComments}
+                className={styles.notificationToggle}
+                title={`새로운 댓글 ${newCommentsCount}개 확인하기`}
+              >
+                <span className={styles.notificationIcon}>🔔</span>
+                <span className={styles.notificationBadge}>
+                  {newCommentsCount > 99 ? '99+' : newCommentsCount}
+                </span>
+              </button>
+            )}
             <button
               onClick={toggleDarkMode}
               className={styles.themeToggle}
@@ -266,7 +502,7 @@ export default function DashboardPage() {
             >
               {isDarkMode ? '☀️' : '🌙'}
             </button>
-            <h1 className={styles.title}>?누가 윤서한테 악플씀?</h1>
+
             <button
               onClick={fetchComments}
               disabled={loading}
@@ -279,6 +515,7 @@ export default function DashboardPage() {
         </div>
         <div className={styles.lastRefreshedText}>
           마지막 새로고침: {lastRefreshed ? formatDate(lastRefreshed.toISOString()) : 'N/A'}
+          <span className={styles.realtimeStatus}> • 실시간 상태: {realtimeStatus}</span>
         </div>
       </header>
 
@@ -354,6 +591,20 @@ export default function DashboardPage() {
         <button onClick={scrollToTop} className={styles.scrollToTopButton} title="맨 위로 가기">
           ⬆️
         </button>
+      )}
+
+      {/* 토스트 알림 */}
+      {toastNotification && (
+        <div className={styles.toastNotification}>
+          <span className={styles.toastIcon}>🔔</span>
+          <span className={styles.toastMessage}>{toastNotification}</span>
+          <button
+            onClick={() => setToastNotification(null)}
+            className={styles.toastClose}
+          >
+            ✕
+          </button>
+        </div>
       )}
     </div>
   );

@@ -1,0 +1,25 @@
+{
+    "name": "YouTube 댓글 대시보드",
+    "short_name": "댓글 대시보드",
+    "description": "실시간 YouTube 댓글 모니터링 대시보드",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#3b82f6",
+    "orientation": "portrait-primary",
+    "categories": [
+        "productivity",
+        "utilities"
+    ],
+    "icons": [
+        {
+            "src": "/favicon.ico",
+            "sizes": "16x16 32x32 48x48",
+            "type": "image/x-icon"
+        }
+    ],
+    "permissions": [
+        "notifications"
+    ],
+    "prefer_related_applications": false
+}

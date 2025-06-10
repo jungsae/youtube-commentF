@@ -13,13 +13,27 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "악플찾기",
-  description: "악플을 실시간으로 모니터링하고 관리하는 대시보드",
+  title: "YouTube 댓글 대시보드",
+  description: "실시간 YouTube 댓글 모니터링 및 알림 대시보드",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/favicon.ico",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "댓글 대시보드",
+  },
 };
 
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+  themeColor: '#3b82f6',
 };
 
 export default function RootLayout({
