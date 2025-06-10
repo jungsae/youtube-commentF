@@ -58,53 +58,96 @@ export default function DashboardPage() {
 
   // 다크모드 초기화 (localStorage에서 읽기)
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'light') {
-      setIsDarkMode(false);
-      document.documentElement.setAttribute('data-theme', 'light');
-    } else if (savedTheme === 'dark') {
+    try {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'light') {
+        setIsDarkMode(false);
+        document.documentElement.setAttribute('data-theme', 'light');
+      } else if (savedTheme === 'dark') {
+        setIsDarkMode(true);
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else {
+        // 저장된 설정이 없으면 기본 다크모드
+        setIsDarkMode(true);
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', 'dark');
+      }
+    } catch (error) {
+      console.warn('⚠️ localStorage 접근 실패, 기본 다크모드 적용:', error);
       setIsDarkMode(true);
-      document.documentElement.setAttribute('data-theme', 'dark');
-    } else {
-      // 저장된 설정이 없으면 기본 다크모드
-      setIsDarkMode(true);
-      document.documentElement.setAttribute('data-theme', 'dark');
-      localStorage.setItem('theme', 'dark');
+      if (typeof document !== 'undefined') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
     }
   }, []);
 
   // 서비스 워커 등록 및 알림 권한 요청 (자동 활성화)
   useEffect(() => {
-    // 서비스 워커 등록
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js')
-        .then((registration) => {
-          console.log('✅ 서비스 워커 등록 성공:', registration);
-        })
-        .catch((error) => {
-          console.log('❌ 서비스 워커 등록 실패:', error);
-        });
+    // 서비스 워커 등록 (모바일 호환성 체크)
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      try {
+        navigator.serviceWorker.register('/sw.js')
+          .then((registration) => {
+            console.log('✅ 서비스 워커 등록 성공:', registration);
+          })
+          .catch((error) => {
+            console.warn('❌ 서비스 워커 등록 실패 (정상적인 현상일 수 있음):', error);
+          });
+      } catch (error) {
+        console.warn('⚠️ 서비스 워커 등록 중 예외 발생:', error);
+      }
+    } else {
+      console.log('ℹ️ 서비스 워커를 지원하지 않는 환경입니다.');
     }
 
-    // 자동으로 알림 권한 요청
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission().then(permission => {
-        console.log('🔔 브라우저 알림 권한 결과:', permission);
-      });
+    // 자동으로 알림 권한 요청 (모바일 호환성 체크)
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      try {
+        if (Notification.permission === 'default') {
+          Notification.requestPermission()
+            .then(permission => {
+              console.log('🔔 브라우저 알림 권한 결과:', permission);
+            })
+            .catch(error => {
+              console.warn('⚠️ 알림 권한 요청 실패:', error);
+            });
+        } else {
+          console.log('🔔 알림 권한 상태:', Notification.permission);
+        }
+      } catch (error) {
+        console.warn('⚠️ 알림 기능 초기화 중 예외 발생:', error);
+      }
+    } else {
+      console.log('ℹ️ 알림을 지원하지 않는 환경입니다.');
     }
   }, []);
 
-  // 브라우저 알림 표시 함수
+  // 브라우저 알림 표시 함수 (모바일 호환성 강화)
   const showBrowserNotification = (comment: Comment) => {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      const notification = new Notification('새로운 댓글이 등록되었습니다!', {
-        body: `${comment.author}: ${comment.text.slice(0, 50)}${comment.text.length > 50 ? '...' : ''}`,
-        icon: '/favicon.ico',
-        tag: 'new-comment'
-      });
+    if (typeof window === 'undefined') return;
 
-      // 5초 후 자동으로 닫기
-      setTimeout(() => notification.close(), 5000);
+    try {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        const notification = new Notification('새로운 댓글이 등록되었습니다!', {
+          body: `${comment.author}: ${comment.text.slice(0, 50)}${comment.text.length > 50 ? '...' : ''}`,
+          icon: '/favicon.ico',
+          tag: 'new-comment'
+        });
+
+        // 5초 후 자동으로 닫기
+        setTimeout(() => {
+          try {
+            notification.close();
+          } catch (e) {
+            console.warn('⚠️ 알림 닫기 실패:', e);
+          }
+        }, 5000);
+      } else {
+        console.log('ℹ️ 브라우저 알림을 사용할 수 없습니다. 권한:',
+          'Notification' in window ? Notification.permission : '지원안함');
+      }
+    } catch (error) {
+      console.warn('⚠️ 브라우저 알림 표시 실패:', error);
     }
   };
 
@@ -127,11 +170,21 @@ export default function DashboardPage() {
 
   // 다크모드 토글 함수
   const toggleDarkMode = () => {
-    const newDarkMode = !isDarkMode;
-    setIsDarkMode(newDarkMode);
-    const theme = newDarkMode ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
+    try {
+      const newDarkMode = !isDarkMode;
+      setIsDarkMode(newDarkMode);
+      const theme = newDarkMode ? 'dark' : 'light';
+
+      if (typeof document !== 'undefined') {
+        document.documentElement.setAttribute('data-theme', theme);
+      }
+
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('theme', theme);
+      }
+    } catch (error) {
+      console.warn('⚠️ 다크모드 토글 실패:', error);
+    }
   };
 
   // 맨 위로 가기 함수
@@ -190,7 +243,7 @@ export default function DashboardPage() {
     }
   }, [mounted]); // mounted 상태가 true가 될 때 실행
 
-  // 실시간 구독 설정
+  // 실시간 구독 설정 (모바일 호환성 강화)
   useEffect(() => {
     if (!mounted) return; // 마운트되지 않으면 실행하지 않음
 
@@ -202,103 +255,128 @@ export default function DashboardPage() {
 
     console.log('🔄 실시간 구독 설정 시작...');
 
-    // 기존 채널이 있으면 먼저 정리
-    if (channelRef.current) {
-      console.log('🧹 기존 채널 정리 중...');
-      supabaseClient.removeChannel(channelRef.current);
-      channelRef.current = null;
+    try {
+      // 기존 채널이 있으면 먼저 정리
+      if (channelRef.current) {
+        console.log('🧹 기존 채널 정리 중...');
+        try {
+          supabaseClient.removeChannel(channelRef.current);
+        } catch (cleanupError) {
+          console.warn('⚠️ 기존 채널 정리 중 오류:', cleanupError);
+        }
+        channelRef.current = null;
+      }
+
+      // 고유한 채널 이름 생성 (중복 방지)
+      const channelName = `comments-realtime-${Date.now()}-${Math.random()}`;
+      console.log('📡 새 채널 생성:', channelName);
+
+      // 구독 시작 표시
+      isSubscribedRef.current = true;
+
+      // 1. 채널 생성
+      channelRef.current = supabaseClient
+        .channel(channelName)
+        .on(
+          'postgres_changes', // 데이터베이스 변경 사항을 구독
+          {
+            event: 'INSERT', // INSERT 이벤트만 감지 (새로운 댓글만)
+            schema: 'public',
+            table: 'comments',
+          },
+          (payload) => {
+            try {
+              // 변경 사항이 감지되면 이 함수가 실행됩니다.
+              console.log('🔔 새로운 댓글 감지!', payload);
+
+              const newComment = payload.new as Comment;
+
+              // 새로운 댓글을 상태에 추가
+              setComments(prevComments => {
+                console.log('📝 댓글 상태 업데이트:', newComment);
+                const updatedComments = [newComment, ...prevComments];
+
+                // 알림 카운트 증가 및 새 댓글 ID 추가
+                setNewCommentsCount(prev => {
+                  const newCount = prev + 1;
+                  console.log('🔢 새 댓글 카운트:', newCount);
+                  return newCount;
+                });
+
+                // 새 댓글 ID 목록에 추가
+                setNewCommentIds(prev => [...prev, newComment.comment_id]);
+
+                // 브라우저 알림 표시 (항상 활성화)
+                showBrowserNotification(newComment);
+
+                // 토스트 알림 표시
+                const message = newComment.is_reply
+                  ? `새로운 답글: ${newComment.author}님이 답글을 달았습니다.`
+                  : `새로운 댓글: ${newComment.author}님이 댓글을 달았습니다.`;
+                showToastNotification(message);
+
+                return updatedComments;
+              });
+            } catch (payloadError) {
+              console.warn('⚠️ 실시간 댓글 처리 중 오류:', payloadError);
+            }
+          }
+        )
+        .subscribe((status, err) => {
+          try {
+            // 구독 상태 변경 시 콜백
+            console.log('📡 실시간 구독 상태:', status);
+
+            if (status === 'SUBSCRIBED') {
+              console.log('✅ comments 테이블 실시간 구독 성공!');
+              setRealtimeStatus('연결됨');
+            } else if (status === 'CHANNEL_ERROR') {
+              console.error('❌ 구독 에러 상세:', {
+                status,
+                error: err,
+                message: err?.message,
+                fullError: JSON.stringify(err, null, 2)
+              });
+              setRealtimeStatus(`채널 오류: ${err?.message || '알 수 없는 오류'}`);
+              // 에러 발생 시 구독 상태 초기화
+              isSubscribedRef.current = false;
+            } else if (status === 'TIMED_OUT') {
+              console.warn('⏰ 실시간 구독 타임아웃');
+              setRealtimeStatus('타임아웃');
+              isSubscribedRef.current = false;
+            } else if (status === 'CLOSED') {
+              console.log('📴 실시간 구독 연결 종료');
+              setRealtimeStatus('연결 종료');
+              isSubscribedRef.current = false;
+            } else {
+              console.log('🔄 구독 상태 변경:', status);
+              setRealtimeStatus(`연결 중... (${status})`);
+            }
+          } catch (statusError) {
+            console.warn('⚠️ 구독 상태 처리 중 오류:', statusError);
+            setRealtimeStatus('오류 발생');
+            isSubscribedRef.current = false;
+          }
+        });
+
+    } catch (subscriptionError) {
+      console.error('❌ 실시간 구독 설정 중 오류:', subscriptionError);
+      setRealtimeStatus('구독 실패');
+      isSubscribedRef.current = false;
     }
-
-    // 고유한 채널 이름 생성 (중복 방지)
-    const channelName = `comments-realtime-${Date.now()}-${Math.random()}`;
-    console.log('📡 새 채널 생성:', channelName);
-
-    // 구독 시작 표시
-    isSubscribedRef.current = true;
-
-    // 1. 채널 생성
-    channelRef.current = supabaseClient
-      .channel(channelName)
-      .on(
-        'postgres_changes', // 데이터베이스 변경 사항을 구독
-        {
-          event: 'INSERT', // INSERT 이벤트만 감지 (새로운 댓글만)
-          schema: 'public',
-          table: 'comments',
-        },
-        (payload) => {
-          // 변경 사항이 감지되면 이 함수가 실행됩니다.
-          console.log('🔔 새로운 댓글 감지!', payload);
-
-          const newComment = payload.new as Comment;
-
-          // 새로운 댓글을 상태에 추가
-          setComments(prevComments => {
-            console.log('📝 댓글 상태 업데이트:', newComment);
-            const updatedComments = [newComment, ...prevComments];
-
-            // 알림 카운트 증가 및 새 댓글 ID 추가
-            setNewCommentsCount(prev => {
-              const newCount = prev + 1;
-              console.log('🔢 새 댓글 카운트:', newCount);
-              return newCount;
-            });
-
-            // 새 댓글 ID 목록에 추가
-            setNewCommentIds(prev => [...prev, newComment.comment_id]);
-
-            // 브라우저 알림 표시 (항상 활성화)
-            showBrowserNotification(newComment);
-
-            // 토스트 알림 표시
-            const message = newComment.is_reply
-              ? `새로운 답글: ${newComment.author}님이 답글을 달았습니다.`
-              : `새로운 댓글: ${newComment.author}님이 댓글을 달았습니다.`;
-            showToastNotification(message);
-
-            return updatedComments;
-          });
-        }
-      )
-      .subscribe((status, err) => {
-        // 구독 상태 변경 시 콜백
-        console.log('📡 실시간 구독 상태:', status);
-
-        if (status === 'SUBSCRIBED') {
-          console.log('✅ comments 테이블 실시간 구독 성공!');
-          setRealtimeStatus('연결됨');
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ 구독 에러 상세:', {
-            status,
-            error: err,
-            message: err?.message,
-            fullError: JSON.stringify(err, null, 2)
-          });
-          setRealtimeStatus(`채널 오류: ${err?.message || '알 수 없는 오류'}`);
-          // 에러 발생 시 구독 상태 초기화
-          isSubscribedRef.current = false;
-        } else if (status === 'TIMED_OUT') {
-          console.warn('⏰ 실시간 구독 타임아웃');
-          setRealtimeStatus('타임아웃');
-          isSubscribedRef.current = false;
-        } else if (status === 'CLOSED') {
-          console.log('📴 실시간 구독 연결 종료');
-          setRealtimeStatus('연결 종료');
-          isSubscribedRef.current = false;
-        } else {
-          console.log('🔄 구독 상태 변경:', status);
-          setRealtimeStatus(`연결 중... (${status})`);
-        }
-      });
 
     // 2. 컴포넌트가 언마운트될 때 채널 구독 해제 (메모리 누수 방지)
     return () => {
-      if (channelRef.current) {
-        console.log('🔌 실시간 구독 해제...');
-        supabaseClient.removeChannel(channelRef.current);
-        channelRef.current = null;
+      try {
+        if (channelRef.current) {
+          console.log('🔌 실시간 구독 해제...');
+          supabaseClient.removeChannel(channelRef.current);
+          channelRef.current = null;
+        }
+        isSubscribedRef.current = false;
+      } catch (cleanupError) {
+        console.warn('⚠️ 실시간 구독 해제 중 오류:', cleanupError);
       }
-      isSubscribedRef.current = false;
     };
   }, [mounted]); // mounted만 의존성으로 사용 (notificationsEnabled 제거)
 
@@ -308,28 +386,42 @@ export default function DashboardPage() {
   const showNewComments = () => {
     if (newCommentIds.length === 0) return;
 
-    // 새 댓글 목록을 콘솔에 출력 (디버깅용)
-    console.log('🔍 새로 추가된 댓글들:', newCommentIds);
+    try {
+      // 새 댓글 목록을 콘솔에 출력 (디버깅용)
+      console.log('🔍 새로 추가된 댓글들:', newCommentIds);
 
-    // 토스트로 새 댓글 정보 표시
-    const message = `새로운 댓글 ${newCommentsCount}개를 확인했습니다.`;
-    showToastNotification(message);
+      // 토스트로 새 댓글 정보 표시
+      const message = `새로운 댓글 ${newCommentsCount}개를 확인했습니다.`;
+      showToastNotification(message);
 
-    // 첫 번째 새 댓글로 스크롤
-    const firstNewCommentId = newCommentIds[0];
-    const element = document.getElementById(`comment-${firstNewCommentId}`);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      // 잠깐 하이라이트 효과
-      element.style.backgroundColor = isDarkMode ? '#4a5568' : '#e2e8f0';
-      setTimeout(() => {
-        element.style.backgroundColor = '';
-      }, 2000);
+      // 첫 번째 새 댓글로 스크롤
+      if (typeof document !== 'undefined') {
+        const firstNewCommentId = newCommentIds[0];
+        const element = document.getElementById(`comment-${firstNewCommentId}`);
+        if (element) {
+          try {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // 잠깐 하이라이트 효과
+            element.style.backgroundColor = isDarkMode ? '#4a5568' : '#e2e8f0';
+            setTimeout(() => {
+              try {
+                element.style.backgroundColor = '';
+              } catch (e) {
+                console.warn('⚠️ 하이라이트 제거 실패:', e);
+              }
+            }, 2000);
+          } catch (scrollError) {
+            console.warn('⚠️ 스크롤 실패:', scrollError);
+          }
+        }
+      }
+
+      // 카운트와 ID 목록 초기화
+      setNewCommentsCount(0);
+      setNewCommentIds([]);
+    } catch (error) {
+      console.warn('⚠️ 새 댓글 확인 중 오류:', error);
     }
-
-    // 카운트와 ID 목록 초기화
-    setNewCommentsCount(0);
-    setNewCommentIds([]);
   };
 
   // 새 댓글 카운트 초기화 함수 (제목 클릭용)
