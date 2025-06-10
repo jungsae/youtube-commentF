@@ -100,13 +100,17 @@ export default function DashboardPage() {
       console.log('ℹ️ 서비스 워커를 지원하지 않는 환경입니다.');
     }
 
-    // 자동으로 알림 권한 요청 (모바일 호환성 체크)
+    // 자동으로 알림 권한 요청 및 사용자 가이드
     if (typeof window !== 'undefined' && 'Notification' in window) {
       try {
         if (Notification.permission === 'default') {
           Notification.requestPermission()
             .then(permission => {
               console.log('🔔 브라우저 알림 권한 결과:', permission);
+              if (permission === 'granted') {
+                // 사용자에게 백그라운드 알림에 대한 안내
+                console.log('📱 알림 사용 안내: 앱이 백그라운드에 있을 때만 알림이 옵니다. 완전히 닫으면 알림이 오지 않습니다.');
+              }
             })
             .catch(error => {
               console.warn('⚠️ 알림 권한 요청 실패:', error);
@@ -669,6 +673,11 @@ export default function DashboardPage() {
             <div className={styles.lastRefreshedText}>
               마지막 새로고침: {lastRefreshed ? formatDate(lastRefreshed.toISOString()) : 'N/A'}
               <span className={styles.realtimeStatus}> • 실시간 상태: {realtimeStatus}</span>
+            </div>
+
+            {/* 알림 사용 안내 */}
+            <div className={styles.notificationGuide}>
+              💡 <strong>알림 사용법:</strong> 새 댓글 알림을 받으려면 앱을 백그라운드에 두세요. 완전히 닫으면 알림이 오지 않습니다.
             </div>
           </header>
 

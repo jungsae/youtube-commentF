@@ -787,6 +787,18 @@
   font-size: 0.85rem;
 }
 
+.notificationGuide {
+  background-color: #e8f4f8;
+  border: 1px solid #b3d9e6;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #2c5aa0;
+  line-height: 1.4;
+  text-align: center;
+}
+
 .commentLikes {
   color: #666;
   font-size: 0.85rem;
@@ -1147,6 +1159,12 @@
 
 [data-theme="dark"] .realtimeStatus {
   color: #9ca3af;
+}
+
+[data-theme="dark"] .notificationGuide {
+  background-color: #1a365d;
+  border-color: #2c5aa0;
+  color: #9bb5e8;
 }
 
 [data-theme="dark"] .toastNotification {
