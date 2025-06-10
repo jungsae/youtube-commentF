@@ -122,32 +122,64 @@ export default function DashboardPage() {
     }
   }, []);
 
-  // 브라우저 알림 표시 함수 (모바일 호환성 강화)
-  const showBrowserNotification = (comment: Comment) => {
+  // PWA 서비스 워커를 통한 시스템 알림 (백그라운드 포함)
+  const showPWANotification = async (comment: Comment) => {
     if (typeof window === 'undefined') return;
 
     try {
+      // 알림 권한 확인
       if ('Notification' in window && Notification.permission === 'granted') {
-        const notification = new Notification('새로운 댓글이 등록되었습니다!', {
-          body: `${comment.author}: ${comment.text.slice(0, 50)}${comment.text.length > 50 ? '...' : ''}`,
-          icon: '/favicon.ico',
-          tag: 'new-comment'
-        });
+        // 서비스 워커가 등록되어 있는지 확인
+        if ('serviceWorker' in navigator) {
+          const registration = await navigator.serviceWorker.ready;
 
-        // 5초 후 자동으로 닫기
-        setTimeout(() => {
-          try {
-            notification.close();
-          } catch (e) {
-            console.warn('⚠️ 알림 닫기 실패:', e);
+          if (registration && registration.showNotification) {
+            // 서비스 워커를 통한 푸시 알림 (백그라운드에서도 작동)
+            await registration.showNotification('새로운 댓글이 등록되었습니다!', {
+              body: `${comment.author}: ${comment.text.slice(0, 50)}${comment.text.length > 50 ? '...' : ''}`,
+              icon: '/favicon.ico',
+              tag: 'new-comment',
+              requireInteraction: false, // 자동으로 사라지도록
+              silent: false
+            });
+
+            console.log('✅ PWA 서비스 워커 알림 발송됨');
+          } else {
+            // 서비스 워커를 사용할 수 없으면 기본 브라우저 알림 사용
+            const notification = new Notification('새로운 댓글이 등록되었습니다!', {
+              body: `${comment.author}: ${comment.text.slice(0, 50)}${comment.text.length > 50 ? '...' : ''}`,
+              icon: '/favicon.ico',
+              tag: 'new-comment'
+            });
+
+            // 5초 후 자동으로 닫기
+            setTimeout(() => {
+              notification.close();
+            }, 5000);
+
+            console.log('✅ 기본 브라우저 알림 발송됨');
           }
-        }, 5000);
+        } else {
+          console.log('ℹ️ 서비스 워커를 지원하지 않는 환경');
+        }
       } else {
-        console.log('ℹ️ 브라우저 알림을 사용할 수 없습니다. 권한:',
+        console.log('ℹ️ 알림 권한이 없거나 지원하지 않는 환경. 권한:',
           'Notification' in window ? Notification.permission : '지원안함');
       }
     } catch (error) {
-      console.warn('⚠️ 브라우저 알림 표시 실패:', error);
+      console.warn('⚠️ PWA 알림 표시 실패:', error);
+
+      // 폴백: 기본 브라우저 알림 시도
+      try {
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification('새로운 댓글이 등록되었습니다!', {
+            body: `${comment.author}: ${comment.text.slice(0, 50)}${comment.text.length > 50 ? '...' : ''}`,
+            icon: '/favicon.ico'
+          });
+        }
+      } catch (fallbackError) {
+        console.warn('⚠️ 폴백 알림도 실패:', fallbackError);
+      }
     }
   };
 
@@ -328,8 +360,8 @@ export default function DashboardPage() {
                 // 새 댓글 ID 목록에 추가
                 setNewCommentIds(prev => [...prev, newComment.comment_id]);
 
-                // 브라우저 알림 표시 (항상 활성화)
-                showBrowserNotification(newComment);
+                // PWA 서비스 워커를 통한 시스템 알림 (항상 활성화)
+                showPWANotification(newComment);
 
                 // 토스트 알림 표시
                 const message = newComment.is_reply
