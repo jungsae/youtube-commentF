@@ -586,151 +586,148 @@ export default function DashboardPage() {
     );
   };
 
-  // 클라이언트 마운트 전에는 로딩 표시
-  if (!mounted) {
-    return (
-      <div className={styles.container}>
+  return (
+    <div className={styles.container} suppressHydrationWarning={true}>
+      {!mounted ? (
         <div className={styles.loading}>
           <div className={styles.loadingSpinner}></div>
           <p>Loading...</p>
         </div>
-      </div>
-    );
-  }
+      ) : (
+        <>
+          <header className={styles.header}>
+            <div className={styles.headerTop}>
+              <h1 className={styles.title} onClick={resetNewCommentsCount}>
+                ?누가 윤서한테 악플씀?
+                {newCommentsCount > 0 && (
+                  <span className={styles.titleBadge}>새로운 댓글 {newCommentsCount}개</span>
+                )}
+              </h1>
+              <div className={styles.headerControls}>
+                {newCommentsCount > 0 && (
+                  <button
+                    onClick={showNewComments}
+                    className={styles.notificationToggle}
+                    title={`새로운 댓글 ${newCommentsCount}개 확인하기`}
+                  >
+                    <span className={styles.notificationIcon}>🔔</span>
+                    <span className={styles.notificationBadge}>
+                      {newCommentsCount > 99 ? '99+' : newCommentsCount}
+                    </span>
+                  </button>
+                )}
+                <button
+                  onClick={toggleDarkMode}
+                  className={styles.themeToggle}
+                  title={isDarkMode ? '라이트 모드로 전환' : '다크 모드로 전환'}
+                >
+                  {isDarkMode ? '☀️' : '🌙'}
+                </button>
 
-  return (
-    <div className={styles.container}>
-      <header className={styles.header}>
-        <div className={styles.headerTop}>
-          <h1 className={styles.title} onClick={resetNewCommentsCount}>
-            ?누가 윤서한테 악플씀?
-            {newCommentsCount > 0 && (
-              <span className={styles.titleBadge}>새로운 댓글 {newCommentsCount}개</span>
-            )}
-          </h1>
-          <div className={styles.headerControls}>
-            {newCommentsCount > 0 && (
-              <button
-                onClick={showNewComments}
-                className={styles.notificationToggle}
-                title={`새로운 댓글 ${newCommentsCount}개 확인하기`}
-              >
-                <span className={styles.notificationIcon}>🔔</span>
-                <span className={styles.notificationBadge}>
-                  {newCommentsCount > 99 ? '99+' : newCommentsCount}
-                </span>
-              </button>
-            )}
-            <button
-              onClick={toggleDarkMode}
-              className={styles.themeToggle}
-              title={isDarkMode ? '라이트 모드로 전환' : '다크 모드로 전환'}
-            >
-              {isDarkMode ? '☀️' : '🌙'}
-            </button>
-
-            <button
-              onClick={fetchComments}
-              disabled={loading}
-              className={styles.button}
-              title={loading ? '새로고침 중...' : '새로고침'}
-            >
-              {loading ? '⏳' : '🔄'}
-            </button>
-          </div>
-        </div>
-        <div className={styles.lastRefreshedText}>
-          마지막 새로고침: {lastRefreshed ? formatDate(lastRefreshed.toISOString()) : 'N/A'}
-          <span className={styles.realtimeStatus}> • 실시간 상태: {realtimeStatus}</span>
-        </div>
-      </header>
-
-      {/* 필터링 및 검색 영역 */}
-      <div className={styles.filterSection}>
-        <div className={styles.filterGroup}>
-          <label className={styles.filterLabel}>상태:</label>
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value as 'all' | 'active' | 'deleted')}
-            className={styles.filterSelect}
-          >
-            <option value="all">전체</option>
-            <option value="active">활성</option>
-            <option value="deleted">삭제됨</option>
-          </select>
-        </div>
-
-
-
-        <div className={styles.filterGroup}>
-          <label className={styles.filterLabel}>검색:</label>
-          <input
-            type="text"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            placeholder="작성자 또는 댓글 내용 검색..."
-            className={styles.searchInput}
-          />
-        </div>
-
-        <div className={styles.filterGroup}>
-          <label className={styles.filterLabel}>정렬:</label>
-          <button
-            onClick={() => setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest')}
-            className={styles.sortToggle}
-            title={sortOrder === 'newest' ? '과거순으로 변경' : '최신순으로 변경'}
-          >
-            {sortOrder === 'newest' ? '🔽 최신순' : '🔼 과거순'}
-          </button>
-        </div>
-
-        <div className={styles.resultCount}>
-          총 {filteredComments.length}개 댓글 (전체 {comments.length}개)
-        </div>
-      </div>
-
-      {error && <p className={styles.errorText}>오류: {error}</p>}
-
-      <div className={styles.commentsContainer}>
-        {commentTree.length > 0 ? (
-          <>
-            {commentTree.slice(0, visibleCommentCount).map(comment => renderComment(comment))}
-
-            {/* 더 보기 버튼 */}
-            {visibleCommentCount < commentTree.length && (
-              <div className={styles.loadMoreContainer}>
-                <button onClick={loadMoreComments} className={styles.loadMoreButton}>
-                  더 보기 ({commentTree.length - visibleCommentCount}개 더 있음)
+                <button
+                  onClick={fetchComments}
+                  disabled={loading}
+                  className={styles.button}
+                  title={loading ? '새로고침 중...' : '새로고침'}
+                >
+                  {loading ? '⏳' : '🔄'}
                 </button>
               </div>
-            )}
-          </>
-        ) : (
-          <div className={styles.noData}>
-            {loading ? '댓글을 불러오는 중입니다...' : '표시할 댓글이 없습니다.'}
+            </div>
+            <div className={styles.lastRefreshedText}>
+              마지막 새로고침: {lastRefreshed ? formatDate(lastRefreshed.toISOString()) : 'N/A'}
+              <span className={styles.realtimeStatus}> • 실시간 상태: {realtimeStatus}</span>
+            </div>
+          </header>
+
+          {/* 필터링 및 검색 영역 */}
+          <div className={styles.filterSection}>
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>상태:</label>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value as 'all' | 'active' | 'deleted')}
+                className={styles.filterSelect}
+              >
+                <option value="all">전체</option>
+                <option value="active">활성</option>
+                <option value="deleted">삭제됨</option>
+              </select>
+            </div>
+
+
+
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>검색:</label>
+              <input
+                type="text"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                placeholder="작성자 또는 댓글 내용 검색..."
+                className={styles.searchInput}
+              />
+            </div>
+
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>정렬:</label>
+              <button
+                onClick={() => setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest')}
+                className={styles.sortToggle}
+                title={sortOrder === 'newest' ? '과거순으로 변경' : '최신순으로 변경'}
+              >
+                {sortOrder === 'newest' ? '🔽 최신순' : '🔼 과거순'}
+              </button>
+            </div>
+
+            <div className={styles.resultCount}>
+              총 {filteredComments.length}개 댓글 (전체 {comments.length}개)
+            </div>
           </div>
-        )}
-      </div>
 
-      {/* 맨 위로 가기 버튼 */}
-      {showScrollToTop && (
-        <button onClick={scrollToTop} className={styles.scrollToTopButton} title="맨 위로 가기">
-          ⬆️
-        </button>
-      )}
+          {error && <p className={styles.errorText}>오류: {error}</p>}
 
-      {/* 토스트 알림 */}
-      {toastNotification && (
-        <div className={styles.toastNotification}>
-          <span className={styles.toastIcon}>🔔</span>
-          <span className={styles.toastMessage}>{toastNotification}</span>
-          <button
-            onClick={() => setToastNotification(null)}
-            className={styles.toastClose}
-          >
-            ✕
-          </button>
-        </div>
+          <div className={styles.commentsContainer}>
+            {commentTree.length > 0 ? (
+              <>
+                {commentTree.slice(0, visibleCommentCount).map(comment => renderComment(comment))}
+
+                {/* 더 보기 버튼 */}
+                {visibleCommentCount < commentTree.length && (
+                  <div className={styles.loadMoreContainer}>
+                    <button onClick={loadMoreComments} className={styles.loadMoreButton}>
+                      더 보기 ({commentTree.length - visibleCommentCount}개 더 있음)
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className={styles.noData}>
+                {loading ? '댓글을 불러오는 중입니다...' : '표시할 댓글이 없습니다.'}
+              </div>
+            )}
+          </div>
+
+          {/* 맨 위로 가기 버튼 */}
+          {showScrollToTop && (
+            <button onClick={scrollToTop} className={styles.scrollToTopButton} title="맨 위로 가기">
+              ⬆️
+            </button>
+          )}
+
+          {/* 토스트 알림 */}
+          {toastNotification && (
+            <div className={styles.toastNotification}>
+              <span className={styles.toastIcon}>🔔</span>
+              <span className={styles.toastMessage}>{toastNotification}</span>
+              <button
+                onClick={() => setToastNotification(null)}
+                className={styles.toastClose}
+              >
+                ✕
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
