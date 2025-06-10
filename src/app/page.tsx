@@ -202,9 +202,18 @@ export default function DashboardPage() {
 
   // 데이터를 가져오는 함수
   const fetchComments = async () => {
+    if (!mounted) return; // 마운트되지 않았으면 실행하지 않음
+
     try {
       setLoading(true);
       setError(null);
+
+      // Supabase 클라이언트 접근 전 검증
+      if (!supabaseClient) {
+        throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+      }
+
+      console.log('📊 댓글 데이터 요청 시작...');
 
       // Supabase 'comments' 테이블에서 데이터를 가져옵니다.
       // is_deleted가 true인 것을 나중에, 그리고 published_at을 기준으로 내림차순 정렬 (최신순)
@@ -216,24 +225,30 @@ export default function DashboardPage() {
         .limit(100); // 한 번에 보여줄 댓글 수 제한
 
       if (fetchError) {
+        console.error('❌ 데이터베이스 쿼리 오류:', fetchError);
         throw new Error(`데이터베이스 오류: ${fetchError.message}`);
       }
 
+      console.log('✅ 댓글 데이터 로드 성공:', data?.length || 0, '개');
       setComments(data || []);
       setLastRefreshed(new Date());
       setVisibleCommentCount(10); // 새로고침 시 카운트 초기화
 
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : '알 수 없는 오류가 발생했습니다.';
+      console.error('❌ fetchComments 오류:', e);
       setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  // 클라이언트 마운트 확인
+  // 클라이언트 마운트 확인 및 초기화
   useEffect(() => {
-    setMounted(true);
+    // 클라이언트사이드에서만 실행되도록 보장
+    if (typeof window !== 'undefined') {
+      setMounted(true);
+    }
   }, []);
 
   // useEffect hook을 사용하여 컴포넌트가 처음 렌더링될 때 데이터를 가져옵니다.
@@ -256,6 +271,13 @@ export default function DashboardPage() {
     console.log('🔄 실시간 구독 설정 시작...');
 
     try {
+      // Supabase 클라이언트 검증
+      if (!supabaseClient) {
+        console.error('❌ Supabase 클라이언트가 초기화되지 않았습니다.');
+        setRealtimeStatus('클라이언트 오류');
+        return;
+      }
+
       // 기존 채널이 있으면 먼저 정리
       if (channelRef.current) {
         console.log('🧹 기존 채널 정리 중...');
@@ -563,6 +585,18 @@ export default function DashboardPage() {
       </div>
     );
   };
+
+  // 클라이언트 마운트 전에는 로딩 표시
+  if (!mounted) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.loading}>
+          <div className={styles.loadingSpinner}></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
