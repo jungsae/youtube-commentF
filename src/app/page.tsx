@@ -21,6 +21,7 @@ interface Comment {
   last_seen_at: string;
   created_at: string;
   updated_at: string;
+  content: string;
 }
 
 // 메인 페이지 컴포넌트
@@ -127,7 +128,71 @@ export default function DashboardPage() {
   }, []);
 
   // PWA 서비스 워커를 통한 시스템 알림 (백그라운드 포함)
+  // const showPWANotification = async (comment: Comment) => {
+  //   if (typeof window === 'undefined') return;
+
+  //   try {
+  //     // 알림 권한 확인
+  //     if ('Notification' in window && Notification.permission === 'granted') {
+  //       // 서비스 워커가 등록되어 있는지 확인
+  //       if ('serviceWorker' in navigator) {
+  //         const registration = await navigator.serviceWorker.ready;
+
+  //         if (registration && registration.showNotification) {
+  //           // 서비스 워커를 통한 푸시 알림 (백그라운드에서도 작동)
+  //           await registration.showNotification('새로운 댓글이 등록되었습니다!', {
+  //             body: `${comment.author}: ${comment.text.slice(0, 50)}${comment.text.length > 50 ? '...' : ''}`,
+  //             icon: '/favicon.ico',
+  //             tag: 'new-comment',
+  //             requireInteraction: false, // 자동으로 사라지도록
+  //             silent: false
+  //           });
+
+  //           console.log('✅ PWA 서비스 워커 알림 발송됨');
+  //         } else {
+  //           // 서비스 워커를 사용할 수 없으면 기본 브라우저 알림 사용
+  //           const notification = new Notification('새로운 댓글이 등록되었습니다!', {
+  //             body: `${comment.author}: ${comment.text.slice(0, 50)}${comment.text.length > 50 ? '...' : ''}`,
+  //             icon: '/favicon.ico',
+  //             tag: 'new-comment'
+  //           });
+
+  //           // 5초 후 자동으로 닫기
+  //           setTimeout(() => {
+  //             notification.close();
+  //           }, 5000);
+
+  //           console.log('✅ 기본 브라우저 알림 발송됨');
+  //         }
+  //       } else {
+  //         console.log('ℹ️ 서비스 워커를 지원하지 않는 환경');
+  //       }
+  //     } else {
+  //       console.log('ℹ️ 알림 권한이 없거나 지원하지 않는 환경. 권한:',
+  //         'Notification' in window ? Notification.permission : '지원안함');
+  //     }
+  //   } catch (error) {
+  //     console.warn('⚠️ PWA 알림 표시 실패:', error);
+
+  //     // 폴백: 기본 브라우저 알림 시도
+  //     try {
+  //       if ('Notification' in window && Notification.permission === 'granted') {
+  //         new Notification('새로운 댓글이 등록되었습니다!', {
+  //           body: `${comment.author}: ${comment.text.slice(0, 50)}${comment.text.length > 50 ? '...' : ''}`,
+  //           icon: '/favicon.ico'
+  //         });
+  //       }
+  //     } catch (fallbackError) {
+  //       console.warn('⚠️ 폴백 알림도 실패:', fallbackError);
+  //     }
+  //   }
+  // };
   const showPWANotification = async (comment: Comment) => {
+    // Comment 타입에 content가 아닌 text로 정의되어 있다면 그에 맞게 사용해야 합니다.
+    // 프로젝트의 Comment 타입을 기준으로 'content' 또는 'text'를 선택하세요.
+    // 여기서는 기존 프로젝트 구조에 따라 'content'로 가정합니다.
+    const commentText = comment.content || comment.text || ''; // 안전하게 두 속성 모두 확인
+
     if (typeof window === 'undefined') return;
 
     try {
@@ -138,29 +203,23 @@ export default function DashboardPage() {
           const registration = await navigator.serviceWorker.ready;
 
           if (registration && registration.showNotification) {
-            // 서비스 워커를 통한 푸시 알림 (백그라운드에서도 작동)
+            // 서비스 워커를 통한 푸시 알림
             await registration.showNotification('새로운 댓글이 등록되었습니다!', {
-              body: `${comment.author}: ${comment.text.slice(0, 50)}${comment.text.length > 50 ? '...' : ''}`,
-              icon: '/favicon.ico',
-              tag: 'new-comment',
-              requireInteraction: false, // 자동으로 사라지도록
+              body: `${comment.author}: ${commentText.slice(0, 50)}${commentText.length > 50 ? '...' : ''}`,
+              icon: '/icons/icon-192x192.png', // 기존 아이콘 경로 유지
+              tag: comment.comment_id,
+              requireInteraction: false,
               silent: false
             });
-
             console.log('✅ PWA 서비스 워커 알림 발송됨');
           } else {
             // 서비스 워커를 사용할 수 없으면 기본 브라우저 알림 사용
             const notification = new Notification('새로운 댓글이 등록되었습니다!', {
-              body: `${comment.author}: ${comment.text.slice(0, 50)}${comment.text.length > 50 ? '...' : ''}`,
-              icon: '/favicon.ico',
-              tag: 'new-comment'
+              body: `${comment.author}: ${commentText.slice(0, 50)}${commentText.length > 50 ? '...' : ''}`,
+              icon: '/icons/icon-192x192.png',
+              tag: comment.comment_id,
             });
-
-            // 5초 후 자동으로 닫기
-            setTimeout(() => {
-              notification.close();
-            }, 5000);
-
+            setTimeout(() => notification.close(), 5000);
             console.log('✅ 기본 브라우저 알림 발송됨');
           }
         } else {
@@ -173,12 +232,12 @@ export default function DashboardPage() {
     } catch (error) {
       console.warn('⚠️ PWA 알림 표시 실패:', error);
 
-      // 폴백: 기본 브라우저 알림 시도
+      // 폴백: 기본 브라우저 알림 시도 (에러 발생 시)
       try {
         if ('Notification' in window && Notification.permission === 'granted') {
           new Notification('새로운 댓글이 등록되었습니다!', {
-            body: `${comment.author}: ${comment.text.slice(0, 50)}${comment.text.length > 50 ? '...' : ''}`,
-            icon: '/favicon.ico'
+            body: `${comment.author}: ${commentText.slice(0, 50)}${commentText.length > 50 ? '...' : ''}`,
+            icon: '/icons/icon-192x192.png'
           });
         }
       } catch (fallbackError) {
