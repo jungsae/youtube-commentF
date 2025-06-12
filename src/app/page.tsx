@@ -127,7 +127,7 @@ export default function DashboardPage() {
     }
   }, []);
 
-  // PWA 서비스 워커를 통한 시스템 알림 (백그라운드 포함)
+  // PWA 서비스 워커를 통한 시스템 알림(백그라운드 포함)
   // const showPWANotification = async (comment: Comment) => {
   //   if (typeof window === 'undefined') return;
 
@@ -188,61 +188,44 @@ export default function DashboardPage() {
   //   }
   // };
   const showPWANotification = async (comment: Comment) => {
-    // Comment 타입에 content가 아닌 text로 정의되어 있다면 그에 맞게 사용해야 합니다.
-    // 프로젝트의 Comment 타입을 기준으로 'content' 또는 'text'를 선택하세요.
-    // 여기서는 기존 프로젝트 구조에 따라 'content'로 가정합니다.
-    const commentText = comment.content || comment.text || ''; // 안전하게 두 속성 모두 확인
-
     if (typeof window === 'undefined') return;
 
     try {
-      // 알림 권한 확인
+      // 1. 알림 권한이 'granted'(허용) 상태인지 확인
       if ('Notification' in window && Notification.permission === 'granted') {
-        // 서비스 워커가 등록되어 있는지 확인
+
+        // 2. 서비스 워커를 지원하는 환경인지 확인
         if ('serviceWorker' in navigator) {
+          // 3. 서비스 워커가 준비될 때까지 기다림
           const registration = await navigator.serviceWorker.ready;
 
+          // 4. 서비스 워커의 showNotification 메서드를 사용하여 알림 표시 (올바른 방법)
           if (registration && registration.showNotification) {
-            // 서비스 워커를 통한 푸시 알림
-            await registration.showNotification('새로운 댓글이 등록되었습니다!', {
-              body: `${comment.author}: ${commentText.slice(0, 50)}${commentText.length > 50 ? '...' : ''}`,
-              icon: '/icons/icon-192x192.png', // 기존 아이콘 경로 유지
-              tag: comment.comment_id,
-              requireInteraction: false,
-              silent: false
+            const title = comment.is_reply ? '새로운 답글' : '새로운 댓글';
+            const body = `${comment.author}: ${comment.text.slice(0, 50)}${comment.text.length > 50 ? '...' : ''}`;
+
+            await registration.showNotification(title, {
+              body: body,
+              icon: '/icons/icon-192x192.png', // manifest.json과 일치하는 아이콘 권장
+              badge: '/icons/icon-72x72.png',
+              tag: comment.comment_id, // 각 알림을 고유하게 식별
+              // renotify: true, // 같은 태그의 알림이 다시 오면 사용자에게 알림
             });
-            console.log('✅ PWA 서비스 워커 알림 발송됨');
+            console.log('✅ PWA 서비스 워커를 통해 알림을 성공적으로 발송했습니다.');
           } else {
-            // 서비스 워커를 사용할 수 없으면 기본 브라우저 알림 사용
-            const notification = new Notification('새로운 댓글이 등록되었습니다!', {
-              body: `${comment.author}: ${commentText.slice(0, 50)}${commentText.length > 50 ? '...' : ''}`,
-              icon: '/icons/icon-192x192.png',
-              tag: comment.comment_id,
-            });
-            setTimeout(() => notification.close(), 5000);
-            console.log('✅ 기본 브라우저 알림 발송됨');
+            console.warn('⚠️ 서비스 워커는 준비되었으나, showNotification을 지원하지 않습니다.');
           }
         } else {
-          console.log('ℹ️ 서비스 워커를 지원하지 않는 환경');
+          console.log('ℹ️ 이 브라우저는 서비스 워커를 지원하지 않습니다.');
         }
       } else {
-        console.log('ℹ️ 알림 권한이 없거나 지원하지 않는 환경. 권한:',
-          'Notification' in window ? Notification.permission : '지원안함');
+        // 권한이 없으면 로그만 남기고 조용히 종료
+        // console.log('ℹ️ 알림 권한이 허용되지 않았습니다.');
       }
     } catch (error) {
-      console.warn('⚠️ PWA 알림 표시 실패:', error);
-
-      // 폴백: 기본 브라우저 알림 시도 (에러 발생 시)
-      try {
-        if ('Notification' in window && Notification.permission === 'granted') {
-          new Notification('새로운 댓글이 등록되었습니다!', {
-            body: `${comment.author}: ${commentText.slice(0, 50)}${commentText.length > 50 ? '...' : ''}`,
-            icon: '/icons/icon-192x192.png'
-          });
-        }
-      } catch (fallbackError) {
-        console.warn('⚠️ 폴백 알림도 실패:', fallbackError);
-      }
+      // try-catch 블록으로 감싸서 여기서 에러가 발생하더라도
+      // Supabase 채널에 영향을 주지 않도록 방지합니다.
+      console.warn('⚠️ PWA 알림을 표시하는 중 오류가 발생했습니다:', error);
     }
   };
 
