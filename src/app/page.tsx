@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------
 'use client'; // 이 컴포넌트는 클라이언트 측에서 렌더링되고 동작합니다.
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase as supabaseClient } from '../lib/supabaseClient'; // 위에서 설정한 클라이언트 가져오기
 import styles from './page.module.css'; // CSS 모듈 import
 
@@ -266,7 +266,7 @@ export default function DashboardPage() {
   };
 
   // 데이터를 가져오는 함수
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     if (!mounted) return; // 마운트되지 않았으면 실행하지 않음
 
     try {
@@ -306,7 +306,7 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [mounted]);
 
   // 클라이언트 마운트 확인 및 초기화
   useEffect(() => {
@@ -321,7 +321,7 @@ export default function DashboardPage() {
     if (mounted) {
       fetchComments();
     }
-  }, [mounted]); // mounted 상태가 true가 될 때 실행
+  }, [mounted, fetchComments]);
 
   // 실시간 구독 설정 (모바일 호환성 강화)
   useEffect(() => {
@@ -465,9 +465,7 @@ export default function DashboardPage() {
         console.warn('⚠️ 실시간 구독 해제 중 오류:', cleanupError);
       }
     };
-  }, [mounted]); // mounted만 의존성으로 사용 (notificationsEnabled 제거)
-
-
+  }, [mounted, fetchComments]);
 
   // 새 댓글 확인 함수
   const showNewComments = () => {
@@ -516,8 +514,6 @@ export default function DashboardPage() {
     setNewCommentsCount(0);
     setNewCommentIds([]);
   };
-
-
 
   // 날짜 포맷팅 함수
   const formatDate = (dateString: string) => new Date(dateString).toLocaleString('ko-KR');
@@ -724,8 +720,6 @@ export default function DashboardPage() {
                 <option value="deleted">삭제됨</option>
               </select>
             </div>
-
-
 
             <div className={styles.filterGroup}>
               <label className={styles.filterLabel}>검색:</label>
