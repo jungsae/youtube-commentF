@@ -89,6 +89,35 @@ export default function DashboardPage() {
         navigator.serviceWorker.register('/sw.js')
           .then((registration) => {
             console.log('✅ 서비스 워커 등록 성공:', registration);
+
+            // 서비스 워커 업데이트 감지
+            registration.addEventListener('updatefound', () => {
+              console.log('🔄 서비스 워커 업데이트 발견');
+              const newWorker = registration.installing;
+
+              if (newWorker) {
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    console.log('🔄 새 서비스 워커 설치 완료, 활성화 대기 중...');
+                    // 새 서비스 워커가 설치되면 즉시 활성화
+                    newWorker.postMessage({ type: 'SKIP_WAITING' });
+                  }
+                });
+              }
+            });
+
+            // 서비스 워커 제어권 변경 감지
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+              console.log('🔄 서비스 워커 제어권 변경됨');
+              // 페이지 새로고침으로 새 서비스 워커 활성화
+              window.location.reload();
+            });
+
+            // 기존 서비스 워커가 있으면 업데이트 확인
+            if (registration.waiting) {
+              console.log('🔄 대기 중인 서비스 워커 발견, 활성화 중...');
+              registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+            }
           })
           .catch((error) => {
             console.warn('❌ 서비스 워커 등록 실패 (정상적인 현상일 수 있음):', error);
